@@ -1,0 +1,5 @@
+#
+shortsleep
+	5usecs    sleep   20usecs
+	15usecs    exit
+#
