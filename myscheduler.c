@@ -128,33 +128,6 @@ void moveOutOfQueue(struct queue *q, char *comand)
 {
     // Move a process from ready_queue to running
 }
-/*
-    Loop through ready_queue
-    append i to running, del i from ready_queue
-    add 5 to counter
- */
-
-
-void executeProcess(/* Parameters */) {
-    // Implement the main logic for process execution
-}
-/*  while loop for the time quantum
-    if statement for process exit if cpu_counter == total expected execution time
-    else, add execute time to the counter and cpu_counter
- */
-
-void handleSystemCall(/* Parameters */) {
-    // Implement logic to handle system calls (e.g., sleep, read, write, etc.)
-}
-
-
-void addToBlockedQueue(/* Parameters */) {
-    // Add a process to the appropriate blocked queue (sleep_blocked_queue, IO_blocked_queue, parent_blocked_queue)
-}
-
-void moveToReadyQueue(/* Parameters */) {
-    // Move a process from a blocked queue to the ready_queue
-}
 
 // ----------------------------------------------------------------------
 // FUNCTIONS TO READ THE SYSTEM CONFIGURATION FILE AND COMMAND FILE
