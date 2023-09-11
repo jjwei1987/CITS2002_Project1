@@ -77,51 +77,54 @@ struct queue{
 // ----------------------------------------------------------------------
 //  Queue and FUNCTIONS
 
-void init_queue(struct queue *queue){
-    queue->front = -1;
-    queue->end = -1;
+void init_queue(struct queue *q){
+    q->front = -1;
+    q->end = -1;
 }
 
-int is_queue_empty(struct queue *queue)
+int is_queue_empty(struct queue *q)
 {
-    if(queue->front == -1)
+    if(q->front == -1)
     {
         printf("Queue is empty\n");
     }
 }
 
-int is_queue_full(struct queue *queue)
+int is_queue_full(struct queue *q)
 {
-    if(queue->end = MAX_RUNNING_PROCESSES -1 && queue->front == 0)
+    if(q->end = MAX_RUNNING_PROCESSES -1 && q->front == 0)
     {
         printf("Queue is full\n");
+        return 1;
     }
-    {
-        printf("Queue is full\n");
-    }
+    return 0;
+   
 }
 
-void addToReadyQueue(struct queue *queue, int *command) 
+//  Add a command/process to any one of the command/process queues. 
+//  It could return 0 if successful. Otherwise, it could return -1.
+int addToQueue(struct queue *q, char *command ) 
 {
-    //  Append all commands to the ready_queue array
-    if(is_queue_full(queue))
+    if(is_queue_full(q))
     {
         printf("Queue is full\n");
+        return -1;
     }
     else
     {
-        if(queue->front == -1)
+        if(q->front == -1)
         {
-            queue->front = 0;
+            q->front = 0;
         }
-        queue->end = (queue->end + 1) % MAX_RUNNING_PROCESSES;
-        queue->queue_name[queue->end] = command;
+        q->end = (q->end + 1) % MAX_RUNNING_PROCESSES;
+        q->queue_name[q->end] = command;
         printf("Command %i added to ready queue\n", command);
+        return 0;
     }
 }
 
 
-void moveFromReadyToRunning(struct queue *ready_queue, struct queue *running_queue) 
+void moveOutOfQueue(struct queue *q, char *comand) 
 {
     // Move a process from ready_queue to running
 }
@@ -289,8 +292,6 @@ void read_commands(char argv0[], char filename[])
                             }
                         }
 
-
-                    
                         else
                         {
                             printf("Error: Invalid command\n");
@@ -338,7 +339,7 @@ void execute_commands(void)
     //  update the global clock to account for the time taken to move the syscalls from ready to running to the CPU
     //  execute first syscall of the process for run_time, CLOCK + run_time
     //  nsyscalls + 1
-    //  update the total time that all syscalls have spent on the CPU, TOTAL_PROCESS_TIME_ON_CPU = syscall_argument + TOTAL_PROCESS_TIME_ON_CPU
+    //  update the total time that all syscalls have spent on the CPU, TOTAL_PROCESS_TIME_ON_CPU = run_time + TOTAL_PROCESS_TIME_ON_CPU
     //  print out the content of the running queue
     //  print information about the command being executed, including its PID, the command name, and the time it was started
     //  check if the command is a blocking command (sleep or wait), if it is, move it to the blocked queue, block time is the time
@@ -349,51 +350,48 @@ void execute_commands(void)
     //  when nprocesses == 0, exit the loop
     for(int i = 0; i < ncommands; i++)
     {
-        addToReadyQueue(&ready_queue, &command_list[i]);
+        addToQueue(&ready_queue, command_list[i].command_name);
         printf("Ready Queue: %s\n", ready_queue.queue_name);
-
-        nprocesses++;
-        moveFromReadyToRunning(&ready_queue, &running_queue);
-        GLOBAL_CLOCK += 5;
+        moveOutOfQueue(&ready_queue, command_list[i].command_name);
         printf("Running Queue: %s\n", running_queue.queue_name);
-        printf("Command %i %s started at %i\n", i, command_list[i].command_name, GLOBAL_CLOCK);
-        for(int j = 0; j < command_list[i].nsyscalls; j++)
+        GLOBAL_CLOCK += 5;
+        command_list[i].syscalls[0].run_time;
+        GLOBAL_CLOCK += command_list[i].syscalls[0].run_time;
+        TOTAL_PROCESS_TIME_ON_CPU += command_list[i].syscalls[0].run_time;
+        printf("Command %s started at %i\n", command_list[i].command_name, GLOBAL_CLOCK);
+        if(strcmp(command_list[i].syscalls[0].syscall_name, "sleep") == 0 || strcmp(command_list[i].syscalls[0].syscall_name, "wait") == 0)
         {
-            GLOBAL_CLOCK += command_list[i].syscalls[j].run_time;
-            TOTAL_PROCESS_TIME_ON_CPU += command_list[i].syscalls[j].syscall_argument;
-            printf("Command %i %s %i %s %i\n", i, command_list[i].command_name, j, command_list[i].syscalls[j].syscall_name, GLOBAL_CLOCK);
-            if(strcmp(command_list[i].syscalls[j].syscall_name, "sleep") == 0 || strcmp(command_list[i].syscalls[j].syscall_name, "wait") == 0)
-            {
-                addToBlockedQueue(&blocked_queue, &command_list[i]);
-                printf("Blocked Queue: %s\n", blocked_queue.queue_name);
-            }
-            else
-            {
-                addToReadyQueue(&ready_queue, &command_list[i]);
-                printf("Ready Queue: %s\n", ready_queue.queue_name);
-                GLOBAL_CLOCK += 10;
-            }
-            if(command_list[i].syscalls[j].run_time > time_quantum)
-            {
-                addToReadyQueue(&ready_queue, &command_list[i]);
-                printf("Ready Queue: %s\n", ready_queue.queue_name);
-                GLOBAL_CLOCK += 10;
-            }
-            if(strcmp(command_list[i].syscalls[j].syscall_name, "spawn") == 0)
-            {
-                // create a new process for the child command
-                // add the child command to the ready queue
-                // clock + 10
-                addToReadyQueue(&ready_queue, &command_list[i]);
-                printf("Ready Queue: %s\n", ready_queue.queue_name);
-                GLOBAL_CLOCK += 10;
-            }
-
-            // move the command out of running queue, clock + 0
-            if(strcmp(command_list[i].syscalls[j].syscall_name, "exit") == 0)
-            {
-
-            }
+            addToQueue(&blocked_queue, command_list[i].command_name);
+            printf("Blocked Queue: %s\n", blocked_queue.queue_name);
+            GLOBAL_CLOCK += command_list[i].syscalls[0].syscall_argument;
+        }
+        else
+        {
+            addToQueue(&ready_queue, command_list[i].command_name);
+            printf("Ready Queue: %s\n", ready_queue.queue_name);
+            GLOBAL_CLOCK += 10;
+        }
+        if(command_list[i].syscalls[0].run_time > time_quantum)
+        {
+            addToQueue(&ready_queue, command_list[i].command_name);
+            printf("Ready Queue: %s\n", ready_queue.queue_name);
+            GLOBAL_CLOCK += 10;
+        }
+        if(strcmp(command_list[i].syscalls[0].syscall_name, "spawn") == 0)
+        {
+            addToQueue(&ready_queue, command_list[i].syscalls[0].child_command_name);
+            printf("Ready Queue: %s\n", ready_queue.queue_name);
+            GLOBAL_CLOCK += 10;
+        }
+        if(strcmp(command_list[i].syscalls[0].syscall_name, "exit") == 0)
+        {
+            moveOutOfQueue(&running_queue, command_list[i].command_name);
+            printf("Running Queue: %s\n", running_queue.queue_name);
+            GLOBAL_CLOCK += 0;
+        }
+        if(nprocesses == 0)
+        {
+            break;
         }
     }
 
